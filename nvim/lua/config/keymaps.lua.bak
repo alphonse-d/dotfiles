@@ -1,0 +1,28 @@
+-- Keymaps are automatically loaded on the VeryLazy event
+-- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
+-- Add any additional keymaps here
+--
+-- ###########################################################
+-- Define a custom Function for gf to also search for filename.md extension.
+local function gf_md_extension()
+  -- Get the filename under the cursur
+  local filename = vim.fn.expand("<cfile>")
+
+  -- Check if the exact filename exists
+  if vim.fn.filereadable(filename) == 1 then
+    vim.cmd("edit " .. filename)
+  else
+    -- Check if the filename.md exists
+    local md_filename = filename .. ".md"
+    if vim.fn.filereadable(md_filename) == 1 then
+      vim.cmd("edit " .. md_filename)
+    else
+      -- Show error message if neither file is found
+      print("File not found: " .. filename .. " or " .. md_filename)
+    end
+  end
+end
+-- Map the 'gf' command to the custom function
+vim.keymap.set("n", "gf", gf_md_extension, { noremap = true, silent = true })
+
+-- ############################################################

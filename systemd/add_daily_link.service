@@ -1,1 +1,12 @@
-/home/alphonse/bin/dotservice/add_daily_link.service
+[Unit]
+Description=Run the add_daily_link.sh script to append Obsidian Links of edited notes to my daily note 
+Before=sleep.target
+
+[Service]
+User=alphonse
+Type=oneshot
+ExecStart=/home/alphonse/bin/add_daily_link.sh
+Restart=no
+
+[Install]
+WantedBy=sleep.target
