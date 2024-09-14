@@ -1,0 +1,1 @@
+/home/alphonse/bin/add_daily_link.sh
