@@ -1,1 +1,39 @@
-/home/alphonse/bin/daily
+#!/bin/bash
+source /home/alphonse/bin/config.env
+
+offset=0
+if [[ $1 =~ ^-[0-9]+$ ]]; then
+  offset=${1#-}
+  offset=-$offset
+fi
+
+# day=$(date +"%Y%m%d")
+day=$(date -d "$offset day" "+%Y%m%d")
+
+journal="$ZETTELKASTEN/Journal/$day.md"
+
+cd "$ZETTELKASTEN" || {
+  echo "Directory does not exist."
+  exit
+}
+
+new_day() {
+  touch "$journal"
+  eval "echo \"$(</home/alphonse/bin/journal.template)\"" >"$journal"
+}
+
+# If daily note does not exist, create a new one
+if [[ offset -eq 0 ]]; then
+  if [ ! -f "$journal" ]; then
+    echo "File does not exist, creating a new daily Journal entry."
+    new_day
+  fi
+  nvim "$journal"
+else
+  if [ ! -f "$journal" ]; then
+    issue_day=$(date -d "$day" +"%m/%d/%Y")
+    echo "No journal file for $issue_day"
+  else
+    nvim -mR "$journal"
+  fi
+fi

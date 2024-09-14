@@ -1,1 +1,58 @@
-/home/alphonse/bin/zet
+#!/bin/bash
+
+# Bash script to create a Zettelkasten note in my second brain
+# # Define ZETTELKASTEN directory
+source /home/alphonse/bin/config.env
+
+new_file() {
+
+  # cd into directory
+  cd "$1" || {
+    echo "Directory doesn't exist"
+    exit
+  }
+
+  # Create the file
+  touch "$1/$filename"
+  eval "echo \"$(</home/alphonse/bin/note.template)\"" >>"$1/$filename"
+
+  # Open the file
+  #nvim '+ normal ggzzi' "$1/$filename.md" -c :NoNeckPain
+  nvim "$1/$filename"
+}
+
+# Prompt the user if no filename is provided
+if [[ $# -ne 1 ]]; then
+  echo "Provide only one filename with spaces as dashes without the .md extension."
+  echo "Example: zet new-note"
+  exit 1
+fi
+
+#Set variable as the argument
+filename=$1
+
+# Checks if there is a ".md" extension and adds it if it is not present
+if [[ "$filename" != *.md ]]; then
+  filename="${filename}.md"
+fi
+
+existing_note=$(find $ZETTELKASTEN -name $filename)
+if [ -n "$existing_note" ]; then
+  echo "File exists at: $existing_note"
+  read -p "Do you want to edit the existing file? (y/n): " answer
+  case "${answer,,}" in
+  y | yes)
+    echo "Opening $existing_note for editing ..."
+    nvim "$existing_note"
+    ;;
+  n | no)
+    echo "File will not be edited."
+    ;;
+  *)
+    echo "Invalid response. Please enter 'y' or 'n'."
+    ;;
+  esac
+else
+  new_file "$ZETTELKASTEN/0-inbox"
+  nvim "$ZETTELKASTEN/0-inbox/$filename"
+fi
