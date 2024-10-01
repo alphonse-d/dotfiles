@@ -1,0 +1,14 @@
+# $(date +"%F %A")
+tags:
+
+Yesterday:  [[$(date -d "yesterday" +"%Y%m%d")]]
+Tomorrow:   [[$(date -d "tomorrow" +"%Y%m%d")]] 
+
+## Habits
+
+- [ ] Devotion
+- [ ] Running
+- [ ] Pull ups/Push ups
+- [ ] Certificate Studying
+
+## Log
