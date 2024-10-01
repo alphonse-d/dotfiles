@@ -18,7 +18,7 @@ new_file() {
 
   # Open the file
   #nvim '+ normal ggzzi' "$1/$filename.md" -c :NoNeckPain
-  nvim "$1/$filename"
+  #nvim "$1/$filename"
 }
 
 # Prompt the user if no filename is provided
