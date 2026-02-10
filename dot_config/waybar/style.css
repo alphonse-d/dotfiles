@@ -1,0 +1,145 @@
+@import "mocha.css";
+
+* {
+  font-family: FantasqueSansMono Nerd Font;
+  font-size: 12px;
+  min-height: 0;
+}
+
+#waybar {
+  background: transparent;
+  color: @text;
+  margin: 5px 5px;
+}
+
+#workspaces {
+  border-radius: 1rem;
+  margin: 5px;
+  background-color: @surface0;
+  margin-left: 1rem;
+}
+
+#workspaces button {
+  color: @lavender;
+  border-radius: 1rem;
+  padding: 0.4rem;
+}
+
+#workspaces button.active {
+  border-radius: 0.5rem;
+  background-color: alpha(@flamingo, 0.20);
+  margin: .5rem;
+  color: @sky;
+}
+
+#workspaces button:hover {
+  color: @sapphire;
+  border-radius: 1rem;
+}
+
+#clock, #window {
+  border-radius: 1rem;
+  margin: 5px;
+  background-color: @surface0;
+  padding: 0.5rem 1rem;
+}
+#idle_inhibitor,
+#custom-music,
+#tray,
+#backlight,
+#battery,
+#pulseaudio,
+#custom-lock,
+#hardware,
+#network,
+#temperature,
+#custom-power {
+  background-color: @surface0;
+  padding: 0.5rem 1rem;
+  margin: 5px 0;
+}
+
+#clock {
+  color: @blue;
+  /*border-radius: 0px 1rem 1rem 0px;
+  margin-right: 0.5rem; */
+}
+
+#battery {
+  color: @green;
+}
+
+#battery.charging {
+  color: @green;
+}
+
+#battery.warning:not(.charging) {
+  color: @yellow;
+  animation: blink 1s step-start infinite;
+}
+
+#battery.critical:not(.charging) {
+  color: @red;
+  animation: blink 1s step-start infinite;
+}
+
+#backlight {
+  color: @yellow;
+}
+
+#backlight, #battery {
+    border-radius: 0;
+}
+
+#pulseaudio {
+  color: @maroon;
+}
+
+#idle_inhibitor {
+  border-radius: 1rem 0px 0px 1rem;
+  margin-left: 1rem;
+  color: @pink;
+}
+#idle_inhibitor.activated {
+  background-color: @rosewater;
+  color: @red;
+}
+
+#custom-music {
+  color: @mauve;
+  border-radius: 1rem;
+}
+
+#custom-lock {
+    border-radius: 1rem 0px 0px 1rem;
+    color: @lavender;
+}
+
+#custom-power {
+    margin-right: 1rem;
+    border-radius: 0px 1rem 1rem 0px;
+    color: @red;
+}
+
+#tray {
+  margin-right: 1rem;
+  border-radius: 0px 1rem 1rem 0px;
+}
+
+#network {
+  color: @sky;
+}
+#cpu {
+  color: @peach;
+  margin-right: 0.5rem;
+}
+#memory {
+  color: @peach;
+}
+#temperature {
+  color: @maroon;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
