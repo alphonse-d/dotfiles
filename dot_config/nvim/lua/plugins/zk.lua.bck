@@ -1,0 +1,147 @@
+return { "zk-org/zk-nvim",
+  config = function()
+    require("zk").setup({
+      picker = "fzf_lua",
+      lsp = {
+          config = {
+            cmd = { "zk", "lsp" },
+            name = "zk",
+            on_attach = function(client, bufnr)
+              vim.api.nvim_buf_set_option(bufnr, "spell", true)
+              vim.api.nvim_buf_set_option(bufnr, "spelllang", "en_us")
+            end,
+          },
+          auto_attach = {
+            enabled = true,
+            filetypes = {'markdown'},
+            },
+        },
+      })
+          -- ZkRename Functionality
+          vim.api.nvim_create_autocmd("BufEnter", {
+            pattern = "*.md",
+            callback = function(args)
+              local bufnr = args.buf
+              
+              vim.api.nvim_buf_create_user_command(bufnr, "ZkRename", function()
+                if vim.bo.modified then
+                  print("__ Save the buffer before renaming.")
+                  return
+                end
+
+              local path = vim.fn.expand("%:p")
+              local dir = vim.fn.fnamemodify(path, ":h")
+              local filename = vim.fn.expand("%:t")
+
+              -- Check directory is in zettelkasten exactly
+              local zk_notebook_dir = vim.fn.expand(vim.fn.getenv("ZK_NOTEBOOK_DIR"))
+              if dir ~= zk_notebook_dir then
+                vim.defer_fn(function()
+                  vim.notify(filename .. " is not directly inside" .. zk_notebook_dir .. ". Filename not changed.", vim.log.levels.INFO, { title = "ZkRename" })
+                end, 5000)
+                return
+              end
+
+              -- hex_prefix check
+              local hex_prefix = filename:match("^(%x+)%-.+%.md$")
+              if not hex_prefix then
+                print("Filename must start with a hex prefix")
+                return
+              end
+
+--              local first_line = vim.fn.getline(1) -- changing from markdown title to yaml frontmatter
+              local title_line = vim.fn.getline(2)
+--              local title = first_line:match ("^# (.+)")
+              local title = title_line:match('^title:%s*[\'"]?(.-)[\'"]?$')
+              if not title then
+                vim.defer_fn(function()
+--                  vim.notify("First line must be a markdown title starting with '# '. Filename not changed.", vim.log.levels.INFO, { title = "ZkRename" }) end, 5000)
+                  vim.notify("Second line must be a YAML title like `title: My Note`. Filename not changed.", vim.log.levels.INFO, { title = "ZkRename" }) end, 5000)
+                return
+              end
+              local slug = title
+                :lower()
+                :gsub("[^a-z0-9]+", "-")
+                :gsub("%-+", "-")
+                :gsub("^%-", "")
+                :gsub("%-$", "")
+              local new_filename = hex_prefix .. "-" .. slug .. ".md"
+              local new_path = dir .. "/" .. new_filename
+
+              if path == new_path then
+                vim.defer_fn(function()
+                  vim.notify("Title did not change. Filename did not change.", vim.log.levels.INFO, { title = "ZkRename" }) end, 5000)
+                return
+              end
+              os.rename(path, new_path)
+              vim.cmd("edit " .. vim.fn.fnameescape(new_path))
+              vim.cmd("bwipeout " .. vim.fn.fnameescape(path))
+              vim.defer_fn(function()
+                vim.notify("Renamed to: " .. new_filename, vim.log.levels.INFO, { title = "ZkRename" })
+              end, 5000)
+            end, { desc = "Rename current file to match the title" })
+
+      -- Automatically run ZkRname when writing buffer
+           vim.api.nvim_create_autocmd("BufWritePost", {
+              buffer = bufnr,
+              callback = function()
+                local path = vim.api.nvim_buf_get_name(bufnr)
+                local zk_root = require("zk.util").notebook_root(path)
+                if zk_root then
+                  vim.schedule(function()
+                    vim.cmd("ZkRename")
+                  end)
+                end
+              end,
+            })
+        end,
+  })
+        vim.api.nvim_create_user_command("ZkInsertYamlHeader", function()
+          local bufnr = 0 -- current buffer
+          local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+          -- Get title from first line matching `# Something`
+          local title
+          for _, line in ipairs(lines) do
+            title = line:match("^#%s+(.+)")
+            if title then break end
+          end
+
+          -- Get 4-char hex ID from filename (e.g., 9ecc-title.md)
+          local filename = vim.fn.expand("%:t")
+          local hex_id = filename:match("^(%x%x%x%x)%-")
+
+          -- Fallback to blank if either not found
+          title = title or ""
+          hex_id = hex_id or ""
+        -- yaml template
+          local template = {
+            "---",
+            "title: " .. title,
+            "id: " .. hex_id,
+            "aliases: ",
+            "keywords: ",
+            "---",
+            ""
+          }
+
+          vim.api.nvim_buf_set_lines(bufnr, 0, 0, false, template)
+        end, { desc = "Insert YAML frontmatter at top of file" })
+
+
+            -- KeyMappings
+        vim.keymap.set("n", "<leader>zc", "<cmd>ZkCd<CR>")
+        vim.keymap.set("n", "<leader>zn", "<cmd>ZkNew { title = vim.fn.input('Title: ') }<CR>")
+        vim.keymap.set("v", "<leader>zn", ":'<,'>ZkNewFromTitleSelection<CR>")
+        vim.keymap.set("n", "<leader>zo", "<cmd>ZkNotes { sort = { 'modified' } }<CR>")
+        vim.keymap.set("v", "<leader>zo", ":'<,'>ZkMatch { sort = { 'modified' } }<CR>")
+        vim.keymap.set("n", "<leader>zm", "<cmd>FzfLua live_grep<CR>")
+        vim.keymap.set("n", "<leader>zB", "<cmd>ZkBuffers<CR>")
+        vim.keymap.set("n", "<leader>zl", "<cmd>ZkLinks<CR>")
+        vim.keymap.set("n", "<leader>zb", "<cmd>ZkBacklinks<CR>")
+        vim.keymap.set("v", "<leader>zi", ":'<,'>ZkInsertLinkAtSelection {matchSelected = true}<CR>")
+        vim.keymap.set("n", "<leader>zi", "<cmd>ZkInsertLink { sort = { 'modified' } }<CR>")
+        vim.keymap.set("n", "<leader>zt", "<cmd>ZkTags<CR>")
+        vim.keymap.set("n", "<leader>zy", "<cmd>ZkInsertYamlHeader<CR>")
+  end,
+}
