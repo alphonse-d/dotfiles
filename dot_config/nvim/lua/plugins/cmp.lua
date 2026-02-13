@@ -9,14 +9,14 @@ return {
   config = function()
     local cmp = require("cmp")
     cmp.setup({
-      completion = {
-        autocomplete = false,
-        completeopt = "menu,menuone,noinsert",
-      },
+--      preselect = cmp.PreselectMode.None,
 
+      completion = {
+        completeopt = "noselect,menu,menuone",
+      },
       mapping = {
-        ["<C-Space>"] = cmp.mapping.complete(),
-        ["<CR>"] = cmp.mapping.confirm({ select = true }),
+        --["<C-Space>"] = cmp.mapping.complete(),
+        ["<CR>"] = cmp.mapping.confirm({ select = false }),
         ["<Tab>"] = cmp.mapping(function(fallback)
                 if cmp.visible() then
                         cmp.select_next_item()
@@ -40,5 +40,11 @@ return {
             { name = "path" },
           },
         })
+    vim.api.nvim_create_user_command("CmpToggle", function()
+      local cmp = require("cmp")
+      local current = cmp.get_config().enabled
+      cmp.setup.buffer({ enabled = not current })
+    end, {})
+
 end,
 }
