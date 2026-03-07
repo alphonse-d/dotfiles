@@ -5,31 +5,32 @@ return{ 'MeanderingProgrammer/render-markdown.nvim',
     ---@module 'render-markdown'
     ---@type render.md.UserConfig
     opts = {
-			conceal = { enable = true },
-			-- quotes, and settings to add space so wrapped lines aren't cut off
-			quote = { repeat_linebreak = true },
-			win_options = {
-				showbreak = {
-					default = '',
-					rendered = '  ',
+	conceal = { enable = true },
+        completions = { lsp = { enabled = true } },
+	-- quotes, and settings to add space so wrapped lines aren't cut off
+	quote = { repeat_linebreak = true },
+	win_options = {
+		showbreak = {
+			default = '',
+			rendered = '  ',
+        		},
+		breakindent = {
+		default = false,
+		rendered = true,
+		},
+		breakindentopt = {
+	        	default = '',
+			rendered = '',
 				},
-				breakindent = {
-					default = false,
-					rendered = true,
-				},
-				breakindentopt = {
-					default = '',
-					rendered = '',
-				},
-		  },
-			latex = {
-				top_pad = 1, 
-				bottom_pad = 1 },
-			checkbox = {
-				custom = {
-					tracking = { raw = '[t]', rendered = '󱎄', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
-					inprogress = { raw = '[i]', rendered = '󰔚', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
-				},
+		},
+		latex = {
+		        top_pad = 1, 
+		        bottom_pad = 1 },
+		checkbox = {
+			custom = {
+				tracking = { raw = '[t]', rendered = '󱎄', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
+				inprogress = { raw = '[i]', rendered = '󰔚', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
 			},
+		},
 	},
 }
