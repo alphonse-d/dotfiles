@@ -16,7 +16,7 @@ local function get_task_chunk()
   -- Move upwards to find bullet line or blank
   while start_line > 0 do
     local line_text = lines[start_line + 1]
-    if line_text == "" or line_text:match("^%s*%-") then
+    if line_text == "" or line_text:match("^%s*%-") or line_text:match("^#+ ") then
       break
     end
     start_line = start_line - 1
@@ -26,14 +26,14 @@ local function get_task_chunk()
   end
 
   local bullet_line = lines[start_line + 1]
-  if not bullet_line:match("^%s*%-") then return nil end
+  if not bullet_line:match("^%s*%- %[[x ]%]") then return nil end
 
-  -- Identify chunk (bullet + following lines until blank or next bullet)
+  -- Identify chunk (bullet + following lines until blank, next bullet, or heading)
   local chunk_start = start_line
   local chunk_end = start_line
   while chunk_end + 1 < total_lines do
     local next_line = lines[chunk_end + 2]
-    if next_line == "" or next_line:match("^%s*%-") then break end
+    if next_line == "" or next_line:match("^%s*%-") or next_line:match("^#+ ") then break end
     chunk_end = chunk_end + 1
   end
 
@@ -121,46 +121,11 @@ function M.toggle_task_and_move()
   vim.cmd("mkview")
   local api = vim.api
   local buf = api.nvim_get_current_buf()
-  local cursor_pos = api.nvim_win_get_cursor(0)
-  local start_line = cursor_pos[1] - 1
-  local lines = api.nvim_buf_get_lines(buf, 0, -1, false)
-  local total_lines = #lines
 
-  if start_line >= total_lines then
+  local chunk, chunk_start, chunk_end, lines = get_task_chunk()
+  if not chunk then
     vim.cmd("loadview")
     return
-  end
-
-  -- Move upwards to find bullet line or blank
-  while start_line > 0 do
-    local line_text = lines[start_line + 1]
-    if line_text == "" or line_text:match("^%s*%-") then
-      break
-    end
-    start_line = start_line - 1
-  end
-  if lines[start_line + 1] == "" and start_line < (total_lines - 1) then
-    start_line = start_line + 1
-  end
-
-  local bullet_line = lines[start_line + 1]
-  if not bullet_line:match("^%s*%- %[[x ]%]") then
-    vim.cmd("loadview")
-    return
-  end
-
-  -- Identify chunk (bullet + following lines until blank or next bullet)
-  local chunk_start = start_line
-  local chunk_end = start_line
-  while chunk_end + 1 < total_lines do
-    local next_line = lines[chunk_end + 2]
-    if next_line == "" or next_line:match("^%s*%-") then break end
-    chunk_end = chunk_end + 1
-  end
-
-  local chunk = {}
-  for i = chunk_start, chunk_end do
-    table.insert(chunk, lines[i + 1])
   end
 
   -- Normalize old-style labels: [done:...] -> `done:...`, [untoggled] -> `untoggled`
