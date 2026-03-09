@@ -1,10 +1,11 @@
 return {
   "arakkkkk/kanban.nvim",
-  -- Optional
---   dependencies = {
---     "nvim-telescope/telescope.nvim",
---   },
     keys = {
+     {
+       "<leader>ko",
+       function() require("user.kanban_picker").open() end,
+       desc = "Open Kanban board (fzf-lua)",
+     },
     {
       "<leader>kk",
       function()
