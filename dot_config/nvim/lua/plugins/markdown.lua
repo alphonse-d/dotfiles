@@ -21,15 +21,32 @@ return{ 'MeanderingProgrammer/render-markdown.nvim',
 		breakindentopt = {
 	        	default = '',
 			rendered = '',
+			conceal = { enable = true },
+			-- quotes, and settings to add space so wrapped lines aren't cut off
+			quote = { repeat_linebreak = true },
+			win_options = {
+				showbreak = {
+					default = '',
+					rendered = '  ',
 				},
-		},
-		latex = {
-		        top_pad = 1, 
-		        bottom_pad = 1 },
-		checkbox = {
-			custom = {
-				tracking = { raw = '[t]', rendered = '󱎄', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
-				inprogress = { raw = '[i]', rendered = '󰔚', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
+				breakindent = {
+					default = false,
+					rendered = true,
+				},
+				breakindentopt = {
+					default = '',
+					rendered = '',
+				},
+		  },
+			latex = {
+				top_pad = 1, 
+				bottom_pad = 1 },
+			checkbox = {
+				custom = {
+--					tracking = { raw = '[t]', rendered = '󱎄', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
+--					inprogress = { raw = '[i]', rendered = '󰔚', highlight = 'RenderMarkdownTodo', scope_highlight = nil },
+				        },
+		                },
 			},
 		},
 	},
