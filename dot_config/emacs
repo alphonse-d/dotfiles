@@ -10,10 +10,21 @@
 (setq package-install-upgrade-built-in t)
 (package-initialize)
 
+;; file cleanup (backups + autosaves) ----
+(setq backup-directory-alist
+      `(("." . "~/.emacs.d/backups/")))
+
+(setq auto-save-file-name-transforms
+      `((".*" "~/.emacs.d/auto-saves/" t)))
+
+(make-directory "~/.emacs.d/backups/" t)
+(make-directory "~/.emacs.d/auto-saves/" t)
+
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
 
+;; Start package installations
 (require 'use-package)
 (setq use-package-always-ensure t)
 
