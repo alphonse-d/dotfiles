@@ -1,0 +1,95 @@
+;; Keep Custom out of this file
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load custom-file 'noerror)
+
+;; Package setup
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;; Allow upgrading built-in packages (e.g. transient/seq) from ELPA. Needed for
+;; Magit, which requires a newer transient than Emacs 29 bundles.
+(setq package-install-upgrade-built-in t)
+(package-initialize)
+
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(require 'use-package)
+(setq use-package-always-ensure t)
+
+;; Evil
+(use-package evil
+  :init (setq evil-want-integration t
+               evil-want-keybinding nil)
+  :config (evil-mode 1))
+
+(use-package evil-collection
+  :after evil
+  :config (evil-collection-init))
+
+;; Vertico: vertical completion UI in the minibuffer
+(use-package vertico
+  :init (vertico-mode))
+
+;; Orderless: space-separated, any-order matching of completion candidates.
+(use-package orderless
+  :init (setq completion-styles '(orderless basic)
+              completion-category-overrides
+              '((file (styles basic partial-completion)))))
+
+;; Org mode: recommended global keybindings + focused agenda file list.
+(use-package org
+  :ensure nil                   
+  :bind (("C-c a" . org-agenda)
+         ("C-c c" . org-capture)
+         ("C-c l" . org-store-link))
+  :config
+  (require 'org-tempo)
+  (setq org-hide-emphasis-markers t)
+  (setq org-log-done 'time)
+  (setq org-agenda-files (list "~/org/todo.org"
+                               "~/org/inbox.org"
+                               "~/org/calendar.org"))
+  (setq org-capture-templates
+        '(("t" "Task" entry
+           (file+headline "~/org/todo.org" "Tasks")
+           "* TODO %?\n  SCHEDULED: %^t DEADLINE: %^t\n  %u")
+          ("i" "Inbox note" entry
+           (file "~/org/inbox.org")
+           "* %?\n  %U")
+          ("e" "Event / appointment" entry
+           (file "~/org/calendar.org")
+           "* %?\n  %^t\n  %u"))))
+
+;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
+(use-package org-modern
+  :hook ((org-mode . org-modern-mode)
+         (org-agenda-finalize . org-modern-agenda))
+  :custom ((org-modern-todo t)
+           (org-modern-table nil)
+           (org-modern-variable-pitch nil)
+           (org-modern-block-fringe nil)
+           (org-modern-star 'replace))
+  :init (global-org-modern-mode))
+
+;; Org-appear: reveal hidden emphasis markers (the hidden * / =)
+(use-package org-appear
+  :hook (org-mode . org-appear-mode)
+  :custom (org-appear-autolinks t))
+
+;; Org-roam: note library, kept separate from the agenda files above.
+(use-package org-roam
+  :init (setq org-roam-directory (file-truename "~/org/roam"))
+  :config (org-roam-db-autosync-mode)
+  :bind (("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n l" . org-roam-buffer-toggle)))
+
+;; Doom themes — using the Tokyo Night variant (doom-tokyo-night).
+(use-package doom-themes
+  :config
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (mapc #'disable-theme custom-enabled-themes)  ; clear any prior theme first
+  (load-theme 'doom-tokyo-night t)
+  (doom-themes-org-config))
