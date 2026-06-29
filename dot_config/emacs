@@ -20,6 +20,9 @@
 (make-directory "~/.emacs.d/backups/" t)
 (make-directory "~/.emacs.d/auto-saves/" t)
 
+;; add tag menu
+(setq org-complete-tags-always-offer-all-agenda-tags t)
+
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -64,13 +67,13 @@
   (setq org-capture-templates
         '(("t" "Task" entry
            (file+headline "~/org/todo.org" "Tasks")
-           "* TODO %?\n  SCHEDULED: %^t DEADLINE: %^t\n  %u")
+           "* TODO %? %^G\n  SCHEDULED: %^t DEADLINE: %^t\n  %u")
           ("i" "Inbox note" entry
            (file "~/org/inbox.org")
            "* %?\n  %U")
           ("e" "Event / appointment" entry
            (file "~/org/calendar.org")
-           "* %?\n  %^t\n  %u"))))
+           "* %? %^G\n  %^t\n  %u"))))
 
 ;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
 (use-package org-modern
