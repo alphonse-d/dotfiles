@@ -10,6 +10,18 @@
 (setq package-install-upgrade-built-in t)
 (package-initialize)
 
+;; Refresh-on-miss: MELPA only keeps the latest build of each package, so a
+;; cached archive index gradually points at tarballs that have been rotated
+;; away (install then 404s). This advice retries `package-install' once after
+;; refreshing the index, so a stale index self-heals instead of erroring.
+(defun my/package-install-refresh-on-miss (orig pkg &rest args)
+  "Retry ORIG `package-install' for PKG (with ARGS) once after refreshing."
+  (condition-case nil
+      (apply orig pkg args)
+    (error (package-refresh-contents)
+           (apply orig pkg args))))
+(advice-add 'package-install :around #'my/package-install-refresh-on-miss)
+
 ;; file cleanup (backups + autosaves) ----
 (setq backup-directory-alist
       `(("." . "~/.emacs.d/backups/")))
@@ -43,7 +55,14 @@
 
 ;; Vertico: vertical completion UI in the minibuffer
 (use-package vertico
-  :init (vertico-mode))
+  :init
+  (vertico-mode)
+  (vertico-multiform-mode)
+  :config
+  ;; org-roam returns nodes already sorted (org-roam-node-default-sort);
+  ;; disabling vertico's own sort for that category preserves that order.
+  (setq vertico-multiform-categories
+        '((org-roam-node (vertico-sort-function . nil)))))
 
 ;; Orderless: space-separated, any-order matching of completion candidates.
 (use-package orderless
@@ -60,7 +79,14 @@
   :config
   (require 'org-tempo)
   (setq org-hide-emphasis-markers t)
+  (setq org-startup-indented t)         ; virtual per-level indentation (org-indent-mode)
   (setq org-log-done 'time)
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)" "ABANDONED(a@)")))
+  (setq org-todo-keyword-faces
+        '(("NEXT"      . (:foreground "#7aa2f7" :weight bold))
+          ("ABANDONED" . (:foreground "#565f89" :weight bold :strike-through t))))
+  (setq org-enforce-todo-dependencies t)
   (setq org-agenda-files (list "~/org/todo.org"
                                "~/org/inbox.org"
                                "~/org/calendar.org"))
@@ -93,11 +119,92 @@
 
 ;; Org-roam: note library, kept separate from the agenda files above.
 (use-package org-roam
+  :demand t                     ; load at startup: keeps the DB autosynced and
+                                ; makes org-roam-db-query available to the agenda
+                                ; advice below (C-c a) without opening a note first
   :init (setq org-roam-directory (file-truename "~/org/roam"))
-  :config (org-roam-db-autosync-mode)
+  :config
+  (org-roam-db-autosync-mode)
+  (setq org-roam-capture-templates
+        '(("d" "default" plain "%?"
+           :target (file+head "${slug}.org"
+                    "#+title: ${title}\n#+filetags: %^G\n")
+           :unnarrowed t)))
   :bind (("C-c n f" . org-roam-node-find)
          ("C-c n i" . org-roam-node-insert)
+         ("C-c n a" . org-roam-alias-add)
+         ("C-c n t" . org-roam-tag-add)
          ("C-c n l" . org-roam-buffer-toggle)))
+
+;; Vulpea: auto-tag roam notes with :project: when they contain open TODOs,
+;; and feed those notes into the agenda dynamically.
+;; Source: https://gist.github.com/d12frosted/a60e8ccb9aceba031af243dff0d19b2e
+(use-package vulpea)
+  ;; Enables vulpea's own metadata DB layer, which nothing here uses (we only
+  ;; use vulpea-buffer-tags-get/set + org-roam's own db-query). Also mis-ordered
+  ;; now that org-roam loads eagerly, so leaving it off:
+  ;; :hook (org-roam-db-autosync-mode . vulpea-db-autosync-enable)
+
+(defun vulpea-buffer-p ()
+  "Return non-nil if the currently visited buffer is a note."
+  (and buffer-file-name
+       (eq major-mode 'org-mode)
+       (string-prefix-p
+        (expand-file-name (file-name-as-directory org-roam-directory))
+        (file-name-directory buffer-file-name))))
+
+(defun vulpea-project-p ()
+  "Return non-nil if current buffer has any todo entry.
+TODO entries marked as done are ignored, meaning the this
+function returns nil if current buffer contains only completed
+tasks."
+  (seq-find
+   (lambda (type)
+     (eq type 'todo))
+   (org-element-map
+    (org-element-parse-buffer 'headline)
+    'headline
+    (lambda (h)
+      (org-element-property :todo-type h)))))
+
+(defun vulpea-project-update-tag ()
+  "Update PROJECT tag in the current buffer."
+  (when (and (not (active-minibuffer-window))
+             (vulpea-buffer-p))
+    (save-excursion
+      (goto-char (point-min))
+      (let* ((tags (vulpea-buffer-tags-get))
+             (original-tags tags))
+        (if (vulpea-project-p)
+            (setq tags (cons "project" tags))
+          (setq tags (remove "project" tags)))
+        (setq tags (seq-uniq tags))
+        (when (or (seq-difference tags original-tags)
+                  (seq-difference original-tags tags))
+          (apply #'vulpea-buffer-tags-set tags))))))
+
+(defun vulpea-project-files ()
+  "Return a list of note files containing 'project' tag."
+  (seq-uniq
+   (seq-map
+    #'car
+    (org-roam-db-query
+     [:select [nodes:file]
+      :from tags
+      :left-join nodes
+      :on (= tags:node-id nodes:id)
+      :where (like tag (quote "%\"project\"%"))]))))
+
+(defun vulpea-agenda-files-update (&rest _)
+  "Update the value of `org-agenda-files'."
+  (setq org-agenda-files
+        (append (list "~/org/todo.org" "~/org/inbox.org" "~/org/calendar.org")
+                (vulpea-project-files))))
+
+(add-hook 'find-file-hook #'vulpea-project-update-tag)
+(add-hook 'before-save-hook #'vulpea-project-update-tag)
+(advice-add 'org-agenda :before #'vulpea-agenda-files-update)
+(advice-add 'org-todo-list :before #'vulpea-agenda-files-update)
 
 ;; Doom themes — using the Tokyo Night variant (doom-tokyo-night).
 (use-package doom-themes
