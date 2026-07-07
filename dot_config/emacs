@@ -222,5 +222,7 @@ tasks."
 (setq org-agenda-window-setup 'only-window)   ; agenda takes the whole frame
 (setq initial-buffer-choice
       (lambda ()
-        (org-agenda nil "n")
-        (get-buffer "*Org Agenda*")))
+        ;; If a file was passed on the command line, show it; otherwise open combined agenda (equivalent of C-c a n) as the startup page
+        (or (seq-find #'buffer-file-name (buffer-list))
+            (progn (org-agenda nil "n")
+                   (get-buffer "*Org Agenda*")))))
