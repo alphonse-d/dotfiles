@@ -59,8 +59,10 @@
   (vertico-mode)
   (vertico-multiform-mode)
   :config
-  ;; org-roam returns nodes already sorted (org-roam-node-default-sort);
-  ;; disabling vertico's own sort for that category preserves that order.
+  ;; Preselect the prompt (typed input) instead of the first candidate, 
+  ;; so menu isn't automatically selected
+  (setq vertico-preselect 'prompt)
+  ;; disabling vertico's own sort for that category to use org-roam's default sort
   (setq vertico-multiform-categories
         '((org-roam-node (vertico-sort-function . nil)))))
 
@@ -214,3 +216,11 @@ tasks."
   (mapc #'disable-theme custom-enabled-themes)  ; clear any prior theme first
   (load-theme 'doom-tokyo-night t)
   (doom-themes-org-config))
+
+;; Startup "homepage": open the combined agenda + all TODOs ("n" dispatch).
+(setq inhibit-startup-screen t)
+(setq org-agenda-window-setup 'only-window)   ; agenda takes the whole frame
+(setq initial-buffer-choice
+      (lambda ()
+        (org-agenda nil "n")
+        (get-buffer "*Org Agenda*")))
