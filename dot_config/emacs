@@ -83,6 +83,7 @@
   (setq org-hide-emphasis-markers t)
   (setq org-startup-indented t)         ; virtual per-level indentation (org-indent-mode)
   (setq org-log-done 'time)
+  (setq org-log-into-drawer t)          ; collect state-change notes in a :LOGBOOK: drawer
   (setq org-todo-keywords
         '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "|" "DONE(d)" "ABANDONED(a@)")))
   (setq org-todo-keyword-faces
