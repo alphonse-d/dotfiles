@@ -84,9 +84,10 @@
   (setq org-startup-indented t)         ; virtual per-level indentation (org-indent-mode)
   (setq org-log-done 'time)
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)" "ABANDONED(a@)")))
+        '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "|" "DONE(d)" "ABANDONED(a@)")))
   (setq org-todo-keyword-faces
         '(("NEXT"      . (:foreground "#7aa2f7" :weight bold))
+          ("WAIT"      . (:foreground "#e0af68" :weight bold))
           ("ABANDONED" . (:foreground "#565f89" :weight bold :strike-through t))))
   (setq org-enforce-todo-dependencies t)
   (setq org-agenda-files (list "~/org/todo.org"
