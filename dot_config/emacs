@@ -98,6 +98,16 @@
   (setq org-agenda-files (list "~/org/todo.org"
                                "~/org/inbox.org"
                                "~/org/calendar.org"))
+  (setq org-agenda-custom-commands
+        '(("n" "Agenda and all TODOs"
+           ((agenda "")
+            (alltodo "")))
+          ("u" "Agenda + unscheduled TODOs"
+           ((agenda "")
+            (alltodo ""
+                     ((org-agenda-overriding-header "Unscheduled/undated TODOs")
+                      (org-agenda-skip-function
+                       '(org-agenda-skip-entry-if 'scheduled 'deadline))))))))
   (setq org-capture-templates
         '(("t" "Task" entry
            (file+headline "~/org/todo.org" "Tasks")
@@ -107,7 +117,8 @@
            "* %?\n  %U")
           ("e" "Event / appointment" entry
            (file "~/org/calendar.org")
-           "* %? %^G\n  %^t\n  %u"))))
+           "* %? %^G\n  %^t\n  %u")))
+)
 
 ;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
 (use-package org-modern
@@ -118,12 +129,14 @@
            (org-modern-variable-pitch nil)
            (org-modern-block-fringe nil)
            (org-modern-star 'replace))
-  :init (global-org-modern-mode))
+  :init (global-org-modern-mode)
+)
 
 ;; Org-appear: reveal hidden emphasis markers (the hidden * / =)
 (use-package org-appear
   :hook (org-mode . org-appear-mode)
-  :custom (org-appear-autolinks t))
+  :custom (org-appear-autolinks t)
+)
 
 ;; Org-roam: note library, kept separate from the agenda files above.
 (use-package org-roam
@@ -142,7 +155,8 @@
          ("C-c n i" . org-roam-node-insert)
          ("C-c n a" . org-roam-alias-add)
          ("C-c n t" . org-roam-tag-add)
-         ("C-c n l" . org-roam-buffer-toggle)))
+         ("C-c n l" . org-roam-buffer-toggle))
+)
 
 ;; Vulpea: auto-tag roam notes with :project: when they contain open TODOs,
 ;; and feed those notes into the agenda dynamically.
@@ -228,7 +242,7 @@ tasks."
 (setq org-agenda-window-setup 'only-window)   ; agenda takes the whole frame
 (setq initial-buffer-choice
       (lambda ()
-        ;; If a file was passed on the command line, show it; otherwise open combined agenda (equivalent of C-c a n) as the startup page
+        ;; If a file was passed on the command line, show it; otherwise open combined agenda (equivalent of C-c a u) as the startup page
         (or (seq-find #'buffer-file-name (buffer-list))
-            (progn (org-agenda nil "n")
+            (progn (org-agenda nil "u")
                    (get-buffer "*Org Agenda*")))))
