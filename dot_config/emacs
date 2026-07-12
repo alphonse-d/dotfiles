@@ -228,6 +228,17 @@ tasks."
 (advice-add 'org-agenda :before #'vulpea-agenda-files-update)
 (advice-add 'org-todo-list :before #'vulpea-agenda-files-update)
 
+;; RSS reader
+(use-package elfeed
+  :bind (("C-x w" . elfeed))
+  :config
+  (setq elfeed-feeds
+	'(
+	  ("https://risky.biz/feeds/newsletters/" cybersecurity threat-intel security-news)
+	  ;; ("https://stackfeed.io/feed" cloud infrastructure) ;; Commenting as there's a lot of noise. Potentially review again and only do it for AWS and Azure.
+	  ("https://isc.sans.edu/dailypodcast.xml" cybersecurity threat-intel podcast)
+	  ))
+)
 ;; Doom themes — using the Tokyo Night variant (doom-tokyo-night).
 (use-package doom-themes
   :config
