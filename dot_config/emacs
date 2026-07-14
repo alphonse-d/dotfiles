@@ -111,7 +111,7 @@
   (setq org-capture-templates
         '(("t" "Task" entry
            (file+headline "~/org/todo.org" "Tasks")
-           "* TODO %? %^G\n  DEADLINE: %^t\n  %u"
+           "* TODO %? %^G\n  SCHEDULED: %^t\n  %u"
 	   :prepend t)
           ("i" "Inbox note" entry
            (file "~/org/inbox.org")
@@ -122,6 +122,12 @@
 	   :prepend t)
 	  ))
 )
+
+(defun my/org-wait-reschedule ()
+  "Prompt for a SCHEDULED date when a task enters WAIT."
+  (when (equal org-state "WAIT")
+    (org-schedule nil)))
+(add-hook 'org-after-todo-state-change-hook #'my/org-wait-reschedule)
 
 ;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
 (use-package org-modern
