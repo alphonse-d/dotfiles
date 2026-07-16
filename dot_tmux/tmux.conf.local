@@ -6,6 +6,9 @@ unbind C-b
 set -g prefix C-a
 bind C-a send-prefix
 
+# See https://superuser.com/questions/252214/ . Decreases delay of sending ESC key.
+set -s escape-time 20
+
 #set scrollback limit
 set-option -g history-limit 100000
 
@@ -14,6 +17,7 @@ set -g status-style bg=colour24,fg=white
 set -g status-left '#[bold] LOCAL:#S '
 
 ### Display ###
+set -g status-position top
 # Increase tmux message display duration from 750ms to 4s
 set -g display-time 40000
 set -g status-interval 5
