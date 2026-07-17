@@ -1,5 +1,6 @@
 # Reload tmux configuration:
 # 	 tmux source-file ~/.tmux.conf
+bind R source-file ~/.tmux.conf
 
 # change prefix command
 unbind C-b
@@ -12,9 +13,10 @@ set -s escape-time 20
 #set scrollback limit
 set-option -g history-limit 100000
 
-# Colors
-set -g status-style bg=colour24,fg=white
-set -g status-left '#[bold] LOCAL:#S '
+# # Change from 0 based to 1 based because keyboard layout
+set -g base-index 1
+set -g pane-base-index 1
+set-option -g renumber-windows on
 
 ### Display ###
 set -g status-position top
@@ -27,8 +29,13 @@ set-option -g default-terminal "xterm-256color"
 set-option -as terminal-overrides ',xterm-256color:Tc'
 
 set -g xterm-keys off   # stop translating semicolon-modifier sequences
+# Vim-like copy/paste in copy-mode.
 set -g status-keys vi
 setw -g mode-keys vi
+bind-key -T copy-mode-vi v send-keys -X begin-selection
+bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
+bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+unbind -T copy-mode-vi MouseDragEnd1Pane
 
 ### navigation
 bind a last-window
@@ -40,5 +47,50 @@ bind-key l select-pane -R
 bind-key -r C-h select-window -t :-
 bind-key -r C-l select-window -t :+
 
-# reload config
-bind R source-file ~/.tmux.conf
+# Visuals taken from https://github.com/tonybanters/tmux-btw/blob/master/tmux.conf
+# Tokyonight Moon theme colors
+thm_bg="#222436"
+thm_fg="#c8d3f5"
+thm_cyan="#86e1fc"
+thm_black="#1b1d2b"
+thm_gray="#3a3f5a"
+thm_magenta="#c099ff"
+thm_pink="#ff757f"
+thm_red="#ff757f"
+thm_green="#c3e88d"
+thm_yellow="#ffc777"
+thm_blue="#82aaff"
+thm_orange="#ff9e64"
+thm_black4="#444a73"
+
+# Status bar
+set -g status "on"
+set -g status-style "#{?client_prefix,bg=${thm_magenta},bg=${thm_bg}},fg=${thm_fg}"
+set -g status-justify "left"
+set -g status-left-length "100"
+set -g status-right-length "100"
+
+# Messages
+set -g message-style "fg=${thm_cyan},bg=${thm_gray},align=centre"
+set -g message-command-style "fg=${thm_cyan},bg=${thm_gray},align=centre"
+
+# Panes
+set -g pane-border-style "fg=${thm_gray}"
+set -g pane-active-border-style "fg=${thm_blue}"
+
+# Windows
+set -g window-status-activity-style "fg=${thm_fg},bg=${thm_bg},none"
+set -g window-status-separator ""
+set -g window-status-style "fg=${thm_fg},bg=${thm_bg},none"
+
+# Statusline - current window
+set -g window-status-current-format "#[fg=${thm_blue},bg=${thm_bg}] #I: #[fg=${thm_magenta},bg=${thm_bg}](✓) #[fg=${thm_cyan},bg=${thm_bg}]#(echo '#{pane_current_path}' | rev | cut -d'/' -f-2 | rev) #[fg=${thm_magenta},bg=${thm_bg}]"
+
+# Statusline - other windows
+set -g window-status-format "#[fg=${thm_blue},bg=${thm_bg}] #I: #[fg=${thm_fg},bg=${thm_bg}]#W"
+
+# Statusline - right side
+set -g status-right "#[fg=${thm_blue},bg=${thm_bg},nobold,nounderscore,noitalics]#[fg=${thm_bg},bg=${thm_blue},nobold,nounderscore,noitalics] #[fg=${thm_fg},bg=${thm_gray}] #W #{?client_prefix,#[fg=${thm_magenta}],#[fg=${thm_cyan}]}#[bg=${thm_gray}]#{?client_prefix,#[bg=${thm_magenta}],#[bg=${thm_cyan}]}#[fg=${thm_bg}] #[fg=${thm_fg},bg=${thm_gray}] #S "
+
+# Statusline - left side (empty)
+set -g status-left ""
