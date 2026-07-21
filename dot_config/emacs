@@ -167,6 +167,15 @@
          ("C-c n l" . org-roam-buffer-toggle))
 )
 
+;; Consult: enhanced search/navigation commands. 
+(use-package consult)
+
+(defun my/consult-ripgrep-roam ()
+  "Search org-roam notes with ripgrep."
+  (interactive)
+  (consult-ripgrep org-roam-directory))
+(global-set-key (kbd "C-c n s") #'my/consult-ripgrep-roam)
+
 ;; Vulpea: auto-tag roam notes with :project: when they contain open TODOs,
 ;; and feed those notes into the agenda dynamically.
 ;; Source: https://gist.github.com/d12frosted/a60e8ccb9aceba031af243dff0d19b2e
