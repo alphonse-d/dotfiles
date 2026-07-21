@@ -155,6 +155,10 @@
   :init (setq org-roam-directory (file-truename "~/org/roam"))
   :config
   (org-roam-db-autosync-mode)
+  ;; Show tags after the title in `C-c n f'; also searchable.
+  (setq org-roam-node-display-template
+        (concat "${title} "
+                (propertize "${tags}" 'face 'org-tag)))
   (setq org-roam-capture-templates
         '(("d" "default" plain "%?"
            :target (file+head "${slug}.org"
