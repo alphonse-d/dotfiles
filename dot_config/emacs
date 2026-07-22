@@ -131,8 +131,6 @@
 
 ;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
 (use-package org-modern
-  :hook ((org-mode . org-modern-mode)
-         (org-agenda-finalize . org-modern-agenda))
   :custom ((org-modern-todo t)
            (org-modern-table nil)
            (org-modern-variable-pitch nil)
