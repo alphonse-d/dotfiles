@@ -300,10 +300,16 @@ tasks."
   (load-theme 'doom-tokyo-night t)
   (doom-themes-org-config))
 
-;; WSL: open links (C-c C-o, browse-url) in the Windows default browser.
+;; WSL: open links in the Windows default browser
+(defun my/wsl-browse-url (url &optional _args)
+  "Open URL in the Windows default browser from WSL."
+  (call-process "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+                nil 0 nil "-NoProfile" "-Command"
+                (format "Start-Process '%s'"
+                        (replace-regexp-in-string "'" "''" url))))
+
 (when (getenv "WSL_DISTRO_NAME")
-  (setq browse-url-generic-program "/mnt/c/Windows/explorer.exe"
-        browse-url-browser-function 'browse-url-generic))
+  (setq browse-url-browser-function #'my/wsl-browse-url))
 
 ;; Startup "homepage": open the combined agenda + all TODOs ("n" dispatch).
 (setq inhibit-startup-screen t)
