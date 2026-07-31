@@ -145,6 +145,38 @@
   :custom (org-appear-autolinks t)
 )
 
+;; EMC2 TRACK links: type e.g. QAN.1235123 then space to expand into a link.
+(defvar my/emc2-track-prefixes
+  '(("SLG" . "SLG")
+    ("QAN" . "ZQN"))
+  "Map the prefix you TYPE -> the EMC2 TRACK URL segment.")
+
+(defun my/org-emc2-linkify ()
+  "Convert a TRACK id like QAN.1235123 before point into a full org link.
+Returns non-nil when it converted something."
+  (let ((rx (concat "\\(" (mapconcat #'car my/emc2-track-prefixes "\\|")
+                    "\\)\\.\\([0-9]+\\)")))
+    (when (looking-back rx (line-beginning-position))
+      (let* ((prefix (match-string 1))
+             (id     (match-string 2))
+             (seg    (cdr (assoc prefix my/emc2-track-prefixes))))
+        (replace-match
+         (format "[[https://emc2summary/GetSummaryReport.ashx/TRACK/%s/%s][%s%s]]"
+                 seg id prefix id)
+         t t)   ; FIXEDCASE: don't upcase the URL to match "QAN"; LITERAL: no \-escapes
+        t))))
+
+(defun my/org-emc2-linkify-maybe ()
+  "Linkify a TRACK id right after a separator is typed."
+  (when (memq (char-before) '(?\s ?\n ?\t))
+    (save-excursion
+      (goto-char (1- (point)))
+      (my/org-emc2-linkify))))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (add-hook 'post-self-insert-hook #'my/org-emc2-linkify-maybe nil t)))
+
 ;; Org-roam: note library, kept separate from the agenda files above.
 (use-package org-roam
   :demand t                     ; load at startup: keeps the DB autosynced and
@@ -267,6 +299,11 @@ tasks."
   (mapc #'disable-theme custom-enabled-themes)  ; clear any prior theme first
   (load-theme 'doom-tokyo-night t)
   (doom-themes-org-config))
+
+;; WSL: open links (C-c C-o, browse-url) in the Windows default browser.
+(when (getenv "WSL_DISTRO_NAME")
+  (setq browse-url-generic-program "/mnt/c/Windows/explorer.exe"
+        browse-url-browser-function 'browse-url-generic))
 
 ;; Startup "homepage": open the combined agenda + all TODOs ("n" dispatch).
 (setq inhibit-startup-screen t)
