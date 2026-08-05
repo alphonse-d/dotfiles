@@ -191,7 +191,7 @@ Returns non-nil when it converted something."
                 (propertize "${tags}" 'face 'org-tag)))
   (setq org-roam-capture-templates
         '(("d" "default" plain "%?"
-           :target (file+head "${slug}.org"
+           :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
                     "#+title: ${title}\n#+filetags: %^G\n")
            :unnarrowed t)))
   :bind (("C-c n f" . org-roam-node-find)
