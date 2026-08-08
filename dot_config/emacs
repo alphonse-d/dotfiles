@@ -1,8 +1,8 @@
-;; Keep Custom out of this file
+;;; Keep Custom out of this file
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load custom-file 'noerror)
 
-;; Package setup
+;;; Package setup
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 ;; Allow upgrading built-in packages (e.g. transient/seq) from ELPA. Needed for
@@ -21,7 +21,7 @@
            (apply orig pkg args))))
 (advice-add 'package-install :around #'my/package-install-refresh-on-miss)
 
-;; file cleanup (backups + autosaves) ----
+;;; File cleanup (backups + autosaves)
 (setq backup-directory-alist
       `(("." . "~/.emacs.d/backups/")))
 
@@ -31,13 +31,15 @@
 (make-directory "~/.emacs.d/backups/" t)
 (make-directory "~/.emacs.d/auto-saves/" t)
 
-;; add tag menu
+;;; Add tag menu
 (setq org-complete-tags-always-offer-all-agenda-tags t)
 
+;;; Buffers
 (use-package ibuffer
   :ensure nil
   :bind (("C-x C-b" . ibuffer)))
 
+;;; use-package bootstrap
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -46,45 +48,43 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-;; Evil
+;;; Evil
 (use-package evil
   :init (setq evil-want-integration t
-               evil-want-keybinding nil)
+              evil-want-keybinding nil)
   :config (evil-mode 1))
 
 (use-package evil-collection
   :after evil
   :config (evil-collection-init))
 
-;; Vertico: vertical completion UI in the minibuffer
+;;; Vertico: vertical completion UI in the minibuffer
 (use-package vertico
   :init
   (vertico-mode 1)
   (vertico-multiform-mode 1)
   :config
-  ;; Preselect the prompt (typed input) instead of the first candidate, 
+  ;; Preselect the prompt (typed input) instead of the first candidate,
   ;; so menu isn't automatically selected
   (setq vertico-preselect 'prompt)
   ;; disabling vertico's own sort for that category to use org-roam's default sort
   (setq vertico-multiform-categories
         '((org-roam-node (vertico-sort-function . nil)))))
 
-;; marginalia - descriptions
+;;; Marginalia - descriptions
 (use-package marginalia
   :config
-  (marginalia-mode 1)
-)
+  (marginalia-mode 1))
 
-;; Orderless: space-separated, any-order matching of completion candidates.
+;;; Orderless: space-separated, any-order matching of completion candidates.
 (use-package orderless
   :init (setq completion-styles '(orderless basic)
               completion-category-overrides
               '((file (styles basic partial-completion)))))
 
-
-;; Org mode: recommended global keybindings + focused agenda file list.
+;;; Org mode: recommended global keybindings + focused agenda file list.
 (use-package org
-  :ensure nil                   
+  :ensure nil
   :bind (("C-c a" . org-agenda)
          ("C-c c" . org-capture)
          ("C-c l" . org-store-link))
@@ -118,16 +118,14 @@
         '(("t" "Task" entry
            (file+headline "~/org/todo.org" "Tasks")
            "* TODO %? %^G\n  SCHEDULED: %^t\n  %u"
-	   :prepend t)
+           :prepend t)
           ("i" "Inbox note" entry
            (file "~/org/inbox.org")
            "* %?\n  %U")
           ("e" "Event / appointment" entry
            (file "~/org/calendar.org")
            "* %? %^G\n  %^t\n  %u"
-	   :prepend t)
-	  ))
-)
+           :prepend t))))
 
 (defun my/org-wait-reschedule ()
   "Prompt for a SCHEDULED date when a task enters WAIT."
@@ -135,23 +133,21 @@
     (org-schedule nil)))
 (add-hook 'org-after-todo-state-change-hook #'my/org-wait-reschedule)
 
-;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
+;;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
 (use-package org-modern
   :custom ((org-modern-todo t)
            (org-modern-table nil)
            (org-modern-variable-pitch nil)
            (org-modern-block-fringe nil)
            (org-modern-star 'replace))
-  :init (global-org-modern-mode)
-)
+  :init (global-org-modern-mode))
 
-;; Org-appear: reveal hidden emphasis markers (the hidden * / =)
+;;; Org-appear: reveal hidden emphasis markers (the hidden * / =)
 (use-package org-appear
   :hook (org-mode . org-appear-mode)
-  :custom (org-appear-autolinks t)
-)
+  :custom (org-appear-autolinks t))
 
-;; EMC2 TRACK links: type e.g. QAN.1235123 then space to expand into a link.
+;;; EMC2 TRACK links: type e.g. QAN.1235123 then space to expand into a link.
 (defvar my/emc2-track-prefixes
   '(("SLG" . "SLG")
     ("QAN" . "ZQN"))
@@ -183,7 +179,7 @@ Returns non-nil when it converted something."
           (lambda ()
             (add-hook 'post-self-insert-hook #'my/org-emc2-linkify-maybe nil t)))
 
-;; Org-roam: note library, kept separate from the agenda files above.
+;;; Org-roam: note library, kept separate from the agenda files above.
 (use-package org-roam
   :demand t                     ; load at startup: keeps the DB autosynced and
                                 ; makes org-roam-db-query available to the agenda
@@ -204,13 +200,11 @@ Returns non-nil when it converted something."
          ("C-c n i" . org-roam-node-insert)
          ("C-c n a" . org-roam-alias-add)
          ("C-c n t" . org-roam-tag-add)
-         ("C-c n l" . org-roam-buffer-toggle))
-)
+         ("C-c n l" . org-roam-buffer-toggle)))
 
-;; Consult: enhanced search/navigation commands. 
+;;; Consult: enhanced search/navigation commands.
 (use-package consult
-  :defer t
-)
+  :defer t)
 
 (defun my/consult-ripgrep-roam ()
   "Search org-roam notes with ripgrep."
@@ -218,14 +212,15 @@ Returns non-nil when it converted something."
   (consult-ripgrep org-roam-directory))
 (global-set-key (kbd "C-c n s") #'my/consult-ripgrep-roam)
 
-;; Vulpea: auto-tag roam notes with :project: when they contain open TODOs,
+;;; Vulpea: auto-tag roam notes with :project: when they contain open TODOs,
 ;; and feed those notes into the agenda dynamically.
 ;; Source: https://gist.github.com/d12frosted/a60e8ccb9aceba031af243dff0d19b2e
-(use-package vulpea)
+(use-package vulpea
   ;; Enables vulpea's own metadata DB layer, which nothing here uses (we only
   ;; use vulpea-buffer-tags-get/set + org-roam's own db-query). Also mis-ordered
   ;; now that org-roam loads eagerly, so leaving it off:
   ;; :hook (org-roam-db-autosync-mode . vulpea-db-autosync-enable)
+  )
 
 (defun vulpea-buffer-p ()
   "Return non-nil if the currently visited buffer is a note."
@@ -288,18 +283,16 @@ tasks."
 (advice-add 'org-agenda :before #'vulpea-agenda-files-update)
 (advice-add 'org-todo-list :before #'vulpea-agenda-files-update)
 
-;; RSS reader
+;;; RSS reader
 (use-package elfeed
   :bind (("C-x w" . elfeed))
   :config
   (setq elfeed-feeds
-	'(
-	  ("https://risky.biz/feeds/newsletters/" cybersecurity threat-intel security-news)
-	  ;; ("https://stackfeed.io/feed" cloud infrastructure) ;; Commenting as there's a lot of noise. Potentially review again and only do it for AWS and Azure.
-	  ("https://isc.sans.edu/dailypodcast.xml" cybersecurity threat-intel podcast)
-	  ))
-)
-;; Doom themes — using the Tokyo Night variant (doom-tokyo-night).
+        '(("https://risky.biz/feeds/newsletters/" cybersecurity threat-intel security-news)
+          ;; ("https://stackfeed.io/feed" cloud infrastructure) ;; Commenting as there's a lot of noise. Potentially review again and only do it for AWS and Azure.
+          ("https://isc.sans.edu/dailypodcast.xml" cybersecurity threat-intel podcast))))
+
+;;; Doom themes — using the Tokyo Night variant (doom-tokyo-night).
 (use-package doom-themes
   :config
   (setq doom-themes-enable-bold t
@@ -308,7 +301,7 @@ tasks."
   (load-theme 'doom-tokyo-night t)
   (doom-themes-org-config))
 
-;; WSL: open links in the Windows default browser
+;;; WSL: open links in the Windows default browser
 (defun my/wsl-browse-url (url &optional _args)
   "Open URL in the Windows default browser from WSL."
   (call-process "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
@@ -319,7 +312,7 @@ tasks."
 (when (getenv "WSL_DISTRO_NAME")
   (setq browse-url-browser-function #'my/wsl-browse-url))
 
-;; Startup "homepage": open the combined agenda + all TODOs ("n" dispatch).
+;;; Startup "homepage": open the combined agenda + all TODOs ("n" dispatch).
 (setq inhibit-startup-screen t)
 (setq org-agenda-window-setup 'only-window)   ; agenda takes the whole frame
 (setq initial-buffer-choice
@@ -328,3 +321,9 @@ tasks."
         (or (seq-find #'buffer-file-name (buffer-list))
             (progn (org-agenda nil "u")
                    (get-buffer "*Org Agenda*")))))
+
+;; Local Variables:
+;; mode: emacs-lisp
+;; indent-tabs-mode: nil
+;; outline-regexp: ";;;+ "
+;; End:
