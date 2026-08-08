@@ -34,6 +34,10 @@
 ;; add tag menu
 (setq org-complete-tags-always-offer-all-agenda-tags t)
 
+(use-package ibuffer
+  :ensure nil
+  :bind (("C-x C-b" . ibuffer)))
+
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -71,9 +75,6 @@
               completion-category-overrides
               '((file (styles basic partial-completion)))))
 
-(use-package ibuffer
-  :ensure nil
-  :bind (("C-x C-b" . ibuffer)))
 
 ;; Org mode: recommended global keybindings + focused agenda file list.
 (use-package org
