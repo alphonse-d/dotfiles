@@ -59,8 +59,8 @@
 ;; Vertico: vertical completion UI in the minibuffer
 (use-package vertico
   :init
-  (vertico-mode)
-  (vertico-multiform-mode)
+  (vertico-mode 1)
+  (vertico-multiform-mode 1)
   :config
   ;; Preselect the prompt (typed input) instead of the first candidate, 
   ;; so menu isn't automatically selected
@@ -68,6 +68,12 @@
   ;; disabling vertico's own sort for that category to use org-roam's default sort
   (setq vertico-multiform-categories
         '((org-roam-node (vertico-sort-function . nil)))))
+
+;; marginalia - descriptions
+(use-package marginalia
+  :config
+  (marginalia-mode 1)
+)
 
 ;; Orderless: space-separated, any-order matching of completion candidates.
 (use-package orderless
