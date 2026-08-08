@@ -8,7 +8,6 @@
 ;; Allow upgrading built-in packages (e.g. transient/seq) from ELPA. Needed for
 ;; Magit, which requires a newer transient than Emacs 29 bundles.
 (setq package-install-upgrade-built-in t)
-(package-initialize)
 
 ;; Refresh-on-miss: MELPA only keeps the latest build of each package, so a
 ;; cached archive index gradually points at tarballs that have been rotated
@@ -202,7 +201,9 @@ Returns non-nil when it converted something."
 )
 
 ;; Consult: enhanced search/navigation commands. 
-(use-package consult)
+(use-package consult
+  :defer t
+)
 
 (defun my/consult-ripgrep-roam ()
   "Search org-roam notes with ripgrep."
