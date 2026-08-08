@@ -31,15 +31,9 @@
 (make-directory "~/.emacs.d/backups/" t)
 (make-directory "~/.emacs.d/auto-saves/" t)
 
-;;; Add tag menu
-(setq org-complete-tags-always-offer-all-agenda-tags t)
-
-;;; Buffers
-(use-package ibuffer
-  :ensure nil
-  :bind (("C-x C-b" . ibuffer)))
-
 ;;; use-package bootstrap
+;; Everything below this point relies on `use-package-always-ensure', so no
+;; `use-package' form belongs above it.
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -82,7 +76,21 @@
               completion-category-overrides
               '((file (styles basic partial-completion)))))
 
+;;; Buffers
+(use-package ibuffer
+  :ensure nil
+  :bind (("C-x C-b" . ibuffer)))
+
 ;;; Org mode: recommended global keybindings + focused agenda file list.
+;; Offer every agenda tag when completing, not just the current buffer's.
+(setq org-complete-tags-always-offer-all-agenda-tags t)
+
+;; Single source of truth for the fixed agenda files. `vulpea-agenda-files-update'
+;; appends the tagged project notes to this list, so both places stay in sync.
+(defvar my/org-agenda-base-files
+  (list "~/org/todo.org" "~/org/inbox.org" "~/org/calendar.org")
+  "Org files always included in the agenda, before vulpea adds project notes.")
+
 (use-package org
   :ensure nil
   :bind (("C-c a" . org-agenda)
@@ -101,9 +109,7 @@
           ("WAIT"      . (:foreground "#e0af68" :weight bold))
           ("ABANDONED" . (:foreground "#565f89" :weight bold :strike-through t))))
   (setq org-enforce-todo-dependencies t)
-  (setq org-agenda-files (list "~/org/todo.org"
-                               "~/org/inbox.org"
-                               "~/org/calendar.org"))
+  (setq org-agenda-files (copy-sequence my/org-agenda-base-files))
   (setq org-agenda-custom-commands
         '(("n" "Agenda and all TODOs"
            ((agenda "")
@@ -127,12 +133,6 @@
            "* %? %^G\n  %^t\n  %u"
            :prepend t))))
 
-(defun my/org-wait-reschedule ()
-  "Prompt for a SCHEDULED date when a task enters WAIT."
-  (when (equal org-state "WAIT")
-    (org-schedule nil)))
-(add-hook 'org-after-todo-state-change-hook #'my/org-wait-reschedule)
-
 ;;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
 (use-package org-modern
   :custom ((org-modern-todo t)
@@ -147,7 +147,72 @@
   :hook (org-mode . org-appear-mode)
   :custom (org-appear-autolinks t))
 
-;;; EMC2 TRACK links: type e.g. QAN.1235123 then space to expand into a link.
+;;; Org-roam: note library, kept separate from the agenda files above.
+(use-package org-roam
+  :demand t                     ; load at startup: keeps the DB autosynced and
+                                ; makes org-roam-db-query available to the agenda
+                                ; advice below (C-c a) without opening a note first
+  :init (setq org-roam-directory (file-truename "~/org/roam"))
+  :config
+  (org-roam-db-autosync-mode)
+  ;; Show tags after the title in `C-c n f'; also searchable.
+  (setq org-roam-node-display-template
+        (concat "${title} "
+                (propertize "${tags}" 'face 'org-tag)))
+  (setq org-roam-capture-templates
+        '(("d" "default" plain "%?"
+           :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                    "#+title: ${title}\n#+filetags: %^G\n")
+           :unnarrowed t)))
+  :bind (("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n a" . org-roam-alias-add)
+         ("C-c n t" . org-roam-tag-add)
+         ("C-c n l" . org-roam-buffer-toggle)))
+
+;;; Consult: enhanced search/navigation commands.
+(use-package consult
+  :defer t)
+
+;;; Vulpea: auto-tag roam notes with :project: when they contain open TODOs,
+;; and feed those notes into the agenda dynamically. The functions live under
+;; "Helpers and custom commands" below.
+;; Source: https://gist.github.com/d12frosted/a60e8ccb9aceba031af243dff0d19b2e
+(use-package vulpea
+  ;; Enables vulpea's own metadata DB layer, which nothing here uses (we only
+  ;; use vulpea-buffer-tags-get/set + org-roam's own db-query). Also mis-ordered
+  ;; now that org-roam loads eagerly, so leaving it off:
+  ;; :hook (org-roam-db-autosync-mode . vulpea-db-autosync-enable)
+  )
+
+;;; RSS reader
+(use-package elfeed
+  :bind (("C-x w" . elfeed))
+  :config
+  (setq elfeed-feeds
+        '(("https://risky.biz/feeds/newsletters/" cybersecurity threat-intel security-news)
+          ;; ("https://stackfeed.io/feed" cloud infrastructure) ;; Commenting as there's a lot of noise. Potentially review again and only do it for AWS and Azure.
+          ("https://isc.sans.edu/dailypodcast.xml" cybersecurity threat-intel podcast))))
+
+;;; Doom themes — using the Tokyo Night variant (doom-tokyo-night).
+(use-package doom-themes
+  :config
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (mapc #'disable-theme custom-enabled-themes)  ; clear any prior theme first
+  (load-theme 'doom-tokyo-night t)
+  (doom-themes-org-config))
+
+;;; Helpers and custom commands
+
+;;;; Org: prompt for a SCHEDULED date when a task enters WAIT
+(defun my/org-wait-reschedule ()
+  "Prompt for a SCHEDULED date when a task enters WAIT."
+  (when (equal org-state "WAIT")
+    (org-schedule nil)))
+(add-hook 'org-after-todo-state-change-hook #'my/org-wait-reschedule)
+
+;;;; Org: EMC2 TRACK links — type e.g. QAN.1235123 then space to expand
 (defvar my/emc2-track-prefixes
   '(("SLG" . "SLG")
     ("QAN" . "ZQN"))
@@ -179,49 +244,14 @@ Returns non-nil when it converted something."
           (lambda ()
             (add-hook 'post-self-insert-hook #'my/org-emc2-linkify-maybe nil t)))
 
-;;; Org-roam: note library, kept separate from the agenda files above.
-(use-package org-roam
-  :demand t                     ; load at startup: keeps the DB autosynced and
-                                ; makes org-roam-db-query available to the agenda
-                                ; advice below (C-c a) without opening a note first
-  :init (setq org-roam-directory (file-truename "~/org/roam"))
-  :config
-  (org-roam-db-autosync-mode)
-  ;; Show tags after the title in `C-c n f'; also searchable.
-  (setq org-roam-node-display-template
-        (concat "${title} "
-                (propertize "${tags}" 'face 'org-tag)))
-  (setq org-roam-capture-templates
-        '(("d" "default" plain "%?"
-           :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
-                    "#+title: ${title}\n#+filetags: %^G\n")
-           :unnarrowed t)))
-  :bind (("C-c n f" . org-roam-node-find)
-         ("C-c n i" . org-roam-node-insert)
-         ("C-c n a" . org-roam-alias-add)
-         ("C-c n t" . org-roam-tag-add)
-         ("C-c n l" . org-roam-buffer-toggle)))
-
-;;; Consult: enhanced search/navigation commands.
-(use-package consult
-  :defer t)
-
+;;;; Org-roam: ripgrep search over the note library
 (defun my/consult-ripgrep-roam ()
   "Search org-roam notes with ripgrep."
   (interactive)
   (consult-ripgrep org-roam-directory))
 (global-set-key (kbd "C-c n s") #'my/consult-ripgrep-roam)
 
-;;; Vulpea: auto-tag roam notes with :project: when they contain open TODOs,
-;; and feed those notes into the agenda dynamically.
-;; Source: https://gist.github.com/d12frosted/a60e8ccb9aceba031af243dff0d19b2e
-(use-package vulpea
-  ;; Enables vulpea's own metadata DB layer, which nothing here uses (we only
-  ;; use vulpea-buffer-tags-get/set + org-roam's own db-query). Also mis-ordered
-  ;; now that org-roam loads eagerly, so leaving it off:
-  ;; :hook (org-roam-db-autosync-mode . vulpea-db-autosync-enable)
-  )
-
+;;;; Vulpea: tag notes with :project: and feed them into the agenda
 (defun vulpea-buffer-p ()
   "Return non-nil if the currently visited buffer is a note."
   (and buffer-file-name
@@ -275,31 +305,13 @@ tasks."
 (defun vulpea-agenda-files-update (&rest _)
   "Update the value of `org-agenda-files'."
   (setq org-agenda-files
-        (append (list "~/org/todo.org" "~/org/inbox.org" "~/org/calendar.org")
+        (append my/org-agenda-base-files
                 (vulpea-project-files))))
 
 (add-hook 'find-file-hook #'vulpea-project-update-tag)
 (add-hook 'before-save-hook #'vulpea-project-update-tag)
 (advice-add 'org-agenda :before #'vulpea-agenda-files-update)
 (advice-add 'org-todo-list :before #'vulpea-agenda-files-update)
-
-;;; RSS reader
-(use-package elfeed
-  :bind (("C-x w" . elfeed))
-  :config
-  (setq elfeed-feeds
-        '(("https://risky.biz/feeds/newsletters/" cybersecurity threat-intel security-news)
-          ;; ("https://stackfeed.io/feed" cloud infrastructure) ;; Commenting as there's a lot of noise. Potentially review again and only do it for AWS and Azure.
-          ("https://isc.sans.edu/dailypodcast.xml" cybersecurity threat-intel podcast))))
-
-;;; Doom themes — using the Tokyo Night variant (doom-tokyo-night).
-(use-package doom-themes
-  :config
-  (setq doom-themes-enable-bold t
-        doom-themes-enable-italic t)
-  (mapc #'disable-theme custom-enabled-themes)  ; clear any prior theme first
-  (load-theme 'doom-tokyo-night t)
-  (doom-themes-org-config))
 
 ;;; WSL: open links in the Windows default browser
 (defun my/wsl-browse-url (url &optional _args)
