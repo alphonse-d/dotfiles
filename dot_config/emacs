@@ -31,6 +31,13 @@
 (make-directory "~/.emacs.d/backups/" t)
 (make-directory "~/.emacs.d/auto-saves/" t)
 
+;;; Editor defaults
+;; Absolute line numbers in code and text buffers only.
+;; `text-mode-hook' also covers org, which derives from text-mode via outline-mode.
+;; `global-display-line-numbers-mode' would number all buffers except minibuffer
+(dolist (hook '(prog-mode-hook text-mode-hook))
+  (add-hook hook #'display-line-numbers-mode))
+
 ;;; use-package bootstrap
 ;; Everything below this point relies on `use-package-always-ensure', so no
 ;; `use-package' form belongs above it.
