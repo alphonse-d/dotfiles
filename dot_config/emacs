@@ -123,14 +123,14 @@
   (setq org-capture-templates
         '(("t" "Task" entry
            (file+headline "~/org/todo.org" "Tasks")
-           "* TODO %^{Task} %^G\nCaptured:%U\n\n%?"
+           "* TODO %^{Task} %^G\nCaptured:%U\n%?"
            :prepend t)
           ("i" "Inbox note" entry
            (file "~/org/inbox.org")
-           "* %^{Title}\nCaptured:%U\n\n%?")
+           "* %^{Title}\nCaptured:%U\n%?")
           ("e" "Event / appointment" entry
            (file "~/org/calendar.org")
-           "* %^{Event} %^G\n%^t\nCaptured:%U\n\n%?"
+           "* %^{Event} %^G\n%^t\nCaptured:%U\n%?"
            :prepend t))))
 
 ;;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
