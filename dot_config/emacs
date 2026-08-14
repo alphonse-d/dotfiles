@@ -320,16 +320,37 @@ tasks."
 (advice-add 'org-agenda :before #'vulpea-agenda-files-update)
 (advice-add 'org-todo-list :before #'vulpea-agenda-files-update)
 
-;;; WSL: open links in the Windows default browser
-(defun my/wsl-browse-url (url &optional _args)
-  "Open URL in the Windows default browser from WSL."
+;;; WSL: hand URLs and files to their Windows default application
+;; PowerShell rather than explorer.exe, which misreads some characters and
+;; opens File Explorer instead.
+(defun my/wsl-start-process (target)
+  "Hand TARGET to Windows `Start-Process', using its default association.
+TARGET is a URL or a Windows-style path."
   (call-process "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
                 nil 0 nil "-NoProfile" "-Command"
                 (format "Start-Process '%s'"
-                        (replace-regexp-in-string "'" "''" url))))
+                        (replace-regexp-in-string "'" "''" target))))
+
+(defun my/wsl-browse-url (url &optional _args)
+  "Open URL in the Windows default browser from WSL."
+  (my/wsl-start-process url))
+
+(defun my/wsl-open-file (path &optional _link)
+  "Open PATH with its Windows default application, as double-clicking would.
+PATH is translated to a Windows path first." 
+  (my/wsl-start-process
+   (string-trim
+    (shell-command-to-string
+     (format "wslpath -w %s" (shell-quote-argument (expand-file-name path)))))))
 
 (when (getenv "WSL_DISTRO_NAME")
-  (setq browse-url-browser-function #'my/wsl-browse-url))
+  (setq browse-url-browser-function #'my/wsl-browse-url)
+  ;; Follow org links to images and PDFs with the Windows default viewer.
+  ;; Prepended, so it wins over org's own .pdf entry and its auto-mode rule
+  ;; (auto-mode-alist maps .png to image-mode, useless in a no-image build).
+  (with-eval-after-load 'org
+    (add-to-list 'org-file-apps
+                 '("\\.\\(png\\|jpe?g\\|pdf\\)\\'" . my/wsl-open-file))))
 
 ;;; Startup "homepage": open the combined agenda + all TODOs ("n" dispatch).
 (setq inhibit-startup-screen t)
