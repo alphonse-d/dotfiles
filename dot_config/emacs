@@ -72,6 +72,11 @@
   (setq vertico-multiform-categories
         '((org-roam-node (vertico-sort-function . nil)))))
 
+;;; Savehist: persist minibuffer history through Emacs restarts
+(use-package savehist
+  :ensure nil
+  :init (savehist-mode 1))
+
 ;;; Marginalia - descriptions
 (use-package marginalia
   :config
