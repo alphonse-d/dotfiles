@@ -115,10 +115,11 @@
   (setq org-log-done 'time)
   (setq org-log-into-drawer t)          ; collect state-change notes in a :LOGBOOK: drawer
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "|" "DONE(d)" "ABANDONED(a@)")))
+        '((sequence "TODO(t)" "NEXT(n)" "WAIT(w@/!)" "LEARN(l@)" "|" "DONE(d)" "ABANDONED(a@)")))
   (setq org-todo-keyword-faces
         '(("NEXT"      . (:foreground "#7aa2f7" :weight bold))
           ("WAIT"      . (:foreground "#e0af68" :weight bold))
+          ("LEARN"     . (:foreground "#bb9af7" :weight bold))
           ("ABANDONED" . (:foreground "#565f89" :weight bold :strike-through t))))
   (setq org-enforce-todo-dependencies t)
   (setq org-agenda-files (copy-sequence my/org-agenda-base-files))
@@ -135,14 +136,14 @@
   (setq org-capture-templates
         '(("t" "Task" entry
            (file+headline "~/org/todo.org" "Tasks")
-           "* TODO %^{Task} %^G\nCaptured:%U\n%?"
+           "* TODO %^{Task} %^G\nCaptured:%U%?"
            :prepend t)
           ("i" "Inbox note" entry
            (file "~/org/inbox.org")
            "* %^{Title}\nCaptured:%U\n%?")
           ("e" "Event / appointment" entry
            (file "~/org/calendar.org")
-           "* %^{Event} %^G\n%^t\nCaptured:%U\n%?"
+           "* %^{Event} %^G\n%^t\nCaptured:%U%?"
            :prepend t))))
 
 ;;; Org-modern: clean styling for blocks (#+BEGIN_…), headline stars, TODOs, etc.
@@ -216,13 +217,6 @@
   (doom-themes-org-config))
 
 ;;; Helpers and custom commands
-
-;;;; Org: prompt for a SCHEDULED date when a task enters WAIT
-(defun my/org-wait-reschedule ()
-  "Prompt for a SCHEDULED date when a task enters WAIT."
-  (when (equal org-state "WAIT")
-    (org-schedule nil)))
-(add-hook 'org-after-todo-state-change-hook #'my/org-wait-reschedule)
 
 ;;;; Org: EMC2 TRACK links — type e.g. QAN.1235123 then space to expand
 (defvar my/emc2-track-prefixes
