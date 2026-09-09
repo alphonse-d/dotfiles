@@ -97,11 +97,51 @@
 ;; Offer every agenda tag when completing, not just the current buffer's.
 (setq org-complete-tags-always-offer-all-agenda-tags t)
 
+(defvar my/org-todo-file "~/org/todo.org"
+  "File holding the category/task tree used by the task capture template.")
+
 ;; Single source of truth for the fixed agenda files. `vulpea-agenda-files-update'
 ;; appends the tagged project notes to this list, so both places stay in sync.
 (defvar my/org-agenda-base-files
-  (list "~/org/todo.org" "~/org/inbox.org" "~/org/calendar.org")
+  (list my/org-todo-file "~/org/inbox.org" "~/org/calendar.org")
   "Org files always included in the agenda, before vulpea adds project notes.")
+
+;; Task capture picks a top-level heading of `my/org-todo-file' as the parent.
+;; Both functions must read headings the same way -- `org-get-heading' with
+;; NO-TAGS and NO-TODO -- or the lookup misses and capture creates a duplicate.
+(defun my/org-todo-categories ()
+  "Return the level-1 headings of `my/org-todo-file' as plain strings."
+  (with-current-buffer (find-file-noselect my/org-todo-file)
+    (org-with-wide-buffer
+     (goto-char (point-min))
+     (let (categories)
+       (while (re-search-forward "^\\* " nil t)
+         (push (org-get-heading t t) categories))
+       (nreverse categories)))))
+
+(defun my/org-capture-goto-category ()
+  "Prompt for a category in `my/org-todo-file' and leave point on its heading.
+Existing level-1 headings are offered as completions.  An unknown name
+creates a new level-1 heading at the end of the file with no tags; tags
+are maintained by hand.  Point is left on the heading so `org-capture'
+inserts the task as a level-2 child."
+  (let* ((categories (my/org-todo-categories))
+         (choice (string-trim (completing-read "Category: " categories nil nil)))
+         found)
+    (when (string-empty-p choice)
+      (user-error "No category given"))
+    (goto-char (point-min))
+    (while (and (not found) (re-search-forward "^\\* " nil t))
+      (when (equal choice (org-get-heading t t))
+        (setq found t)
+        (beginning-of-line)))
+    (unless found
+      (unless (y-or-n-p (format "Category `%s' does not exist.  Create it? " choice))
+        (user-error "Aborted"))
+      (goto-char (point-max))
+      (unless (bolp) (insert "\n"))
+      (insert "* " choice "\n")
+      (forward-line -1))))
 
 (use-package org
   :ensure nil
@@ -135,8 +175,8 @@
                        '(org-agenda-skip-entry-if 'scheduled 'deadline))))))))
   (setq org-capture-templates
         '(("t" "Task" entry
-           (file+headline "~/org/todo.org" "Tasks")
-           "* TODO %^{Task} %^G\nCaptured:%U%?"
+           (file+function my/org-todo-file my/org-capture-goto-category)
+           "* TODO %^{Task}\nCaptured:%U%?"
            :prepend t)
           ("i" "Inbox note" entry
            (file "~/org/inbox.org")
