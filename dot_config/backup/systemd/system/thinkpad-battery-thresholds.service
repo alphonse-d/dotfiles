@@ -1,0 +1,11 @@
+[Unit]
+Description=Set ThinkPad battery charge thresholds
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/thinkpad-battery-thresholds
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

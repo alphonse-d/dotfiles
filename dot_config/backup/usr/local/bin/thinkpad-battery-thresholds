@@ -1,0 +1,38 @@
+#!/bin/sh
+
+found=0
+failed=0
+
+for battery in /sys/class/power_supply/*; do
+    [ -d "$battery" ] || continue
+    [ "$(cat "$battery/type" 2>/dev/null)" = "Battery" ] || continue
+
+    start="$battery/charge_control_start_threshold"
+    end="$battery/charge_control_end_threshold"
+
+    [ -w "$start" ] && [ -w "$end" ] || continue
+    found=1
+
+    #sets lowerbound to 0 in case it already exists and is higher than the desired upper bound.
+    if ! printf '0\n' > "$start"; then
+        echo "Could not write $start" >&2
+        failed=1
+        continue
+    fi
+    if ! printf '85\n' > "$end"; then
+        echo "Could not write $end" >&2
+        failed=1
+        continue
+    fi
+    if ! printf '70\n' > "$start"; then
+        echo "Could not write $start" >&2
+        failed=1
+    fi
+done
+
+if [ "$found" -eq 0 ]; then
+    echo "No battery with writable start and end thresholds found" >&2
+    exit 1
+fi
+
+exit "$failed"
