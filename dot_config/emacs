@@ -104,7 +104,7 @@
 ;; Single source of truth for the fixed agenda files. `my/org-agenda-files-update'
 ;; appends the roam notes that contain tasks, so both places stay in sync.
 (defvar my/org-agenda-base-files
-  (list my/org-todo-file "~/org/inbox.org" "~/org/calendar.org")
+  (list my/org-todo-file "~/org/inbox.org" "~/org/calendar.org" "~/org/outlook.org")
   "Org files always included in the agenda, before roam task notes are added.")
 
 ;; Task capture picks a top-level heading of `my/org-todo-file' as the parent.
