@@ -165,6 +165,20 @@ inserts the task as a level-2 child."
   (interactive)
   (org-agenda nil "d"))
 
+(defun my/org-agenda-relative-date ()
+  "Deadline, else scheduled date, of the entry at point, relative to today.
+E.g. \"Due in 3 d.\", \"Sched 5 d. ago\", \"Due today\"; empty when undated.
+For list views such as WAIT, which have no date column of their own."
+  (let* ((deadline (org-entry-get nil "DEADLINE"))
+         (stamp (or deadline (org-entry-get nil "SCHEDULED"))))
+    (if (null stamp)
+        ""
+      (let ((days (org-time-stamp-to-now stamp)))
+        (format "%s %s:" (if deadline "Due" "Sched")
+                (cond ((= days 0) "today")
+                      ((> days 0) (format "in %d d." days))
+                      (t (format "%d d. ago" (- days)))))))))
+
 (defun my/org-agenda-category ()
   "Agenda prefix label for the entry at point: its file name, as \"name:\".
 Everything up to the first \"-\" (the roam ID, e.g. \"20261024170742-\") is
@@ -216,7 +230,9 @@ Time-grid lines have no file and get an empty string."
                             (org-agenda-skip-entry-if 'scheduled 'deadline
                                                       'todo '("WAIT"))))))
             (todo "WAIT"
-                  ((org-agenda-overriding-header "\nWaiting on")))
+                  ((org-agenda-overriding-header "\nWaiting on")
+                   (org-agenda-prefix-format
+                    '((todo . " %i %-12(my/org-agenda-category)%-17(my/org-agenda-relative-date)")))))
             (agenda ""
                     ((org-agenda-overriding-header "\nOverdue scheduled tasks")
                      (org-agenda-span 1)
