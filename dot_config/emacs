@@ -144,6 +144,19 @@ inserts the task as a level-2 child."
       (insert "* " choice "\n")
       (forward-line -1))))
 
+(defun my/org-agenda-category ()
+  "Agenda prefix label for the entry at point: its file name, as \"name:\".
+Everything up to the first \"-\" (the roam ID, e.g. \"20261024170742-\") is
+dropped and the rest cut to 11 characters, so with its colon it fills the
+12-wide column.  Names without a \"-\" (todo, inbox) are kept whole.
+Time-grid lines have no file and get an empty string."
+  (if-let ((file (buffer-file-name (buffer-base-buffer))))
+      (concat (truncate-string-to-width
+               (replace-regexp-in-string "\\`[^-]*-" "" (file-name-base file))
+               11)
+              ":")
+    ""))
+
 (use-package org
   :ensure nil
   :bind (("C-c a" . org-agenda)
@@ -163,6 +176,13 @@ inserts the task as a level-2 child."
           ("ABANDONED" . (:foreground "#565f89" :weight bold :strike-through t))))
   (setq org-enforce-todo-dependencies t)
   (setq org-agenda-files (copy-sequence my/org-agenda-base-files))
+  ;; Org's default prefixes, with `%c' swapped for `my/org-agenda-category' so
+  ;; long roam file names keep the columns aligned.
+  (setq org-agenda-prefix-format
+        '((agenda . " %i %-12(my/org-agenda-category)%?-12t% s")
+          (todo   . " %i %-12(my/org-agenda-category)")
+          (tags   . " %i %-12(my/org-agenda-category)")
+          (search . " %i %-12(my/org-agenda-category)")))
   (setq org-agenda-custom-commands
         '(("n" "Agenda and all TODOs"
            ((agenda "")
