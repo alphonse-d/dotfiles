@@ -144,6 +144,27 @@ inserts the task as a level-2 child."
       (insert "* " choice "\n")
       (forward-line -1))))
 
+;; Skip functions for the daily agenda blocks.  Each returns nil to keep the
+;; entry, or the position to resume searching from, per `org-agenda-skip-function'.
+(defun my/org-entry-priority-a-p ()
+  "Non-nil if the heading at point has the highest priority cookie."
+  (eq (nth 3 (org-heading-components)) org-priority-highest))
+
+(defun my/org-agenda-skip-unless-priority-a ()
+  "Skip the current entry unless it has the highest priority."
+  (unless (my/org-entry-priority-a-p)
+    (org-entry-end-position)))
+
+(defun my/org-agenda-skip-if-priority-a ()
+  "Skip the current entry if it has the highest priority."
+  (when (my/org-entry-priority-a-p)
+    (org-entry-end-position)))
+
+(defun my/org-agenda-daily ()
+  "Open the daily block agenda (the \"d\" custom command)."
+  (interactive)
+  (org-agenda nil "d"))
+
 (defun my/org-agenda-category ()
   "Agenda prefix label for the entry at point: its file name, as \"name:\".
 Everything up to the first \"-\" (the roam ID, e.g. \"20261024170742-\") is
@@ -159,7 +180,8 @@ Time-grid lines have no file and get an empty string."
 
 (use-package org
   :ensure nil
-  :bind (("C-c a" . org-agenda)
+  :bind (("C-c a" . my/org-agenda-daily)
+         ("C-c A" . org-agenda)
          ("C-c c" . org-capture)
          ("C-c l" . org-store-link))
   :config
@@ -183,10 +205,57 @@ Time-grid lines have no file and get an empty string."
           (todo   . " %i %-12(my/org-agenda-category)")
           (tags   . " %i %-12(my/org-agenda-category)")
           (search . " %i %-12(my/org-agenda-category)")))
+  ;; "d" is the daily view (C-c a).  Undated blocks skip WAIT and
+  ;; priority-A tasks that an earlier block already lists.
   (setq org-agenda-custom-commands
-        '(("n" "Agenda and all TODOs"
-           ((agenda "")
-            (alltodo "")))
+        '(("d" "Daily agenda"
+           ((alltodo ""
+                     ((org-agenda-overriding-header "Important tasks without a date")
+                      (org-agenda-skip-function
+                       '(or (my/org-agenda-skip-unless-priority-a)
+                            (org-agenda-skip-entry-if 'scheduled 'deadline
+                                                      'todo '("WAIT"))))))
+            (todo "WAIT"
+                  ((org-agenda-overriding-header "\nWaiting on")))
+            (agenda ""
+                    ((org-agenda-overriding-header "\nOverdue scheduled tasks")
+                     (org-agenda-span 1)
+                     (org-agenda-start-on-weekday nil)
+                     (org-agenda-entry-types '(:scheduled))
+                     (org-scheduled-delay-days 1) ; hides today's items; Today shows them
+                     (org-agenda-time-grid nil)
+                     (org-agenda-show-all-dates nil)
+                     (org-agenda-format-date "")))
+            (agenda ""
+                    ((org-agenda-overriding-header "\nToday")
+                     (org-agenda-span 1)
+                     (org-agenda-start-on-weekday nil)
+                     (org-scheduled-past-days 0) ; overdue items live in the block above
+                     (org-deadline-warning-days 0)
+                     (org-agenda-sort-notime-is-late nil) ; untimed tasks above the calendar
+                     (org-agenda-format-date "%A %-e %B %Y")))
+            (agenda ""
+                    ((org-agenda-overriding-header "\nNext three days")
+                     (org-agenda-start-day "+1d")
+                     (org-agenda-span 3)
+                     (org-agenda-start-on-weekday nil)
+                     (org-deadline-warning-days 0)
+                     (org-agenda-sort-notime-is-late nil))) ; untimed tasks above the calendar
+            (agenda ""
+                    ((org-agenda-overriding-header "\nUpcoming deadlines (+14d)")
+                     (org-agenda-start-day "+4d") ; continues after the three-day block
+                     (org-agenda-span 14)
+                     (org-agenda-start-on-weekday nil)
+                     (org-agenda-entry-types '(:deadline))
+                     (org-deadline-warning-days 0)
+                     (org-agenda-time-grid nil)
+                     (org-agenda-show-all-dates nil)))
+            (alltodo ""
+                     ((org-agenda-overriding-header "\nUnscheduled TODOs")
+                      (org-agenda-skip-function
+                       '(or (org-agenda-skip-entry-if 'scheduled 'deadline
+                                                      'todo '("WAIT"))
+                            (my/org-agenda-skip-if-priority-a)))))))
           ("u" "Agenda + unscheduled TODOs"
            ((agenda "")
             (alltodo ""
