@@ -212,6 +212,7 @@ Time-grid lines have no file and get an empty string."
           ("ABANDONED" . (:foreground "#565f89" :weight bold :strike-through t))))
   (setq org-enforce-todo-dependencies t)
   (setq org-agenda-files (copy-sequence my/org-agenda-base-files))
+  (setq org-agenda-window-setup 'current-window) ; agenda replaces current window
   ;; Org's default prefixes, with `%c' swapped for `my/org-agenda-category' so
   ;; long roam file names keep the columns aligned.
   (setq org-agenda-prefix-format
